@@ -1,0 +1,89 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:form="sap.ui.layout.form"
+    
+>
+    <form:SimpleForm id="registrationForm">
+        <form:content>
+            <Label
+                id="fnlabel"
+                text="FirstName"
+                required="true" 
+                visible="true"
+            />
+            <Input
+                placeholder="First Name"
+                id="firstNameInput"
+                visible="true"
+                liveChange="onLivechange"
+            />
+
+            <Label
+                id="lnlabel"
+                text="LastName"
+                required="true"
+                visible="true"
+            />
+            <Input
+                placeholder="Last Name"
+                id="lastNameInput"
+                visible="true"
+                liveChange="onLivechange"
+            />
+
+            <Label
+                text="Email"
+                required="true"
+            />
+            <Input
+                placeholder="Email"
+                id="emailInput"
+                type="Email"
+                 liveChange="onLivechange"
+            />
+
+            <Label
+                text="Password"
+                required="true"
+            />
+            <Input
+                placeholder="Password"
+                id="passwordInput"
+                type="Password"
+                 liveChange="onLivechange"
+            />
+
+            <Label
+                text="Re-Enter Password"
+                required="true"
+                id="repassword"
+                visible="true"
+            />
+            <Input
+                placeholder="Password"
+                id="reenterpasswordInput"
+                type="Password"
+                visible="true"
+                 liveChange="onLivechange"
+            />
+        </form:content>
+    </form:SimpleForm>
+    <HBox>
+        <Button
+            text="Sign Up"
+            type="Emphasized"
+            press="onSignUpPress"
+            class="sapUiMediumMarginBegin"
+            id="buttonid"
+            enabled="true"
+        />
+        <Link
+            text="Do you have already an account?"
+            press="onSwitchToLoginPress"
+            class="sapUiTinyMarginBegin sapUiTinyMarginTop"
+            id="linkid"
+        />
+    </HBox>
+   
+</core:FragmentDefinition>
