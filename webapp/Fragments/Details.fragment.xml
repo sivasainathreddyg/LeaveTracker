@@ -2,17 +2,32 @@
 		xmlns="sap.m"
 		xmlns:f="sap.ui.layout.form"
 		xmlns:core="sap.ui.core">
+		
 	<ResponsivePopover
-			id="detailsPopover"
-			title="{title}"
-			class="sapUiResponsivePadding--header"
-			placement="Auto">
-		<beginButton>
-			<Button text="Edit" type="Emphasized" press="handleEditButton"/>
-		</beginButton>
-		<endButton>
-			<Button text="Delete" press="handlePopoverDeleteButton"/>
-		</endButton>
+	placement="Bottom"
+	showArrow="false"
+
+
+			id="detailsPopover">
+		<!-- <beginButton> -->
+			<Button visible="false" text="Edit" type="Emphasized" press="handleEditButton"/>
+		<!-- </beginButton>
+		<endButton> -->
+			<Button visible="false" text="Delete" press="handlePopoverDeleteButton"/>
+		<!-- </endButton> -->
+		<customHeader>
+            <Bar>
+                <contentLeft>
+                    <!-- Title -->
+                    <Title text="{title}" level="H2" class="sapUiResponsivePadding--header" />
+                </contentLeft>
+                <contentRight>
+                    <!-- Button beside the title -->
+                    <Button id="Messagebutton" text="MessageBox" type="Transparent" press="handleMessageBoxButton"/>
+                </contentRight>
+            </Bar>
+        </customHeader>
+		
 		<f:SimpleForm
 				id="appointmentEditForm"
 				editable="false"
@@ -37,8 +52,8 @@
 			<CheckBox
 					id="allDayText"
 					text="All-day"
-					selected="{allDay>/allDay}"
-					enabled="false"/>
+					selected="{allDay}"
+					editable="false"/>
 			<Label text="Type" labelFor="appType"/>
 			<Text id="appTypeText" text="{ path: 'type', formatter: '._typeFormatter'}"/>
 		</f:SimpleForm>

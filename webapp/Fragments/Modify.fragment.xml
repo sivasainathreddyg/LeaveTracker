@@ -5,7 +5,7 @@
 		xmlns:core="sap.ui.core">
 	<Dialog id="modifyDialog" title="Title">
 		<beginButton>
-			<Button text="OK" type="Emphasized" press="handleDialogOkButton"/>
+			<Button visible="true" text="Submit" type="Emphasized" press="handleDialogOkButton"/>
 		</beginButton>
 		<endButton>
 			<Button text="Cancel" press="handleDialogCancelButton"/>
@@ -31,22 +31,26 @@
 				<DatePicker
 						id="DPStartDate"
 						required="true"
+						value="{ type:'sap.ui.model.type.Date', formatOptions: { strictParsing: true, UTC: true } }"
 						visible="{= ${allDay>/allDay}}"
 						change="handleDatePickerChange"/>
 				<Label text="To" labelFor="endDate"/>
 				<DateTimePicker
 						id="DTPEndDate"
 						required="true"
+						value="{ type:'sap.ui.model.type.Date', formatOptions: { strictParsing: true, UTC: true } }"
 						visible="{= !${allDay>/allDay}}"
 						change="handleDateTimePickerChange"/>
 				<DatePicker
 						id="DPEndDate"
 						required="true"
+						value="{ type:'sap.ui.model.type.Date', formatOptions: { strictParsing: true, UTC: true } }"
 						visible="{= ${allDay>/allDay}}"
 						change="handleDatePickerChange"/>
 				<CheckBox
 						id="allDay"
 						text="All-day"
+						value="{ type:'sap.ui.model.type.Date', formatOptions: { strictParsing: true, UTC: true } }"
 						selected="{allDay>/allDay}"
 						select="handleCheckBoxSelect"/>
 				<Label text="Type" labelFor="appType" required="true"/>

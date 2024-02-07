@@ -9,9 +9,11 @@
         "sap/m/MessageToast",
         "sap/ui/core/date/UI5Date",
         "sap/m/Dialog",
-        "sap/m/Button"
+        "sap/m/Button",
+        "sap/ui/model/odata/ODataUtils",
+        "sap/base/i18n/ResourceBundle"
     ],
-    function(coreLibrary, Fragment, Controller, DateFormat, JSONModel, unifiedLibrary, mobileLibrary, MessageToast, UI5Date,Dialog,Button) {
+    function(coreLibrary, Fragment, Controller, DateFormat, JSONModel, unifiedLibrary, mobileLibrary, MessageToast, UI5Date,Dialog,Button,ODataUtils,ResourceBundle) {
         "use strict";
         var that;
     
@@ -22,18 +24,17 @@
         return Controller.extend("com.leavetracker.leavetracker.controller.Main", {
     
             onInit: function() {
-                
+
             
                 that=this;
+                that.Email="";
+                that.FullName="";
+                that.object="";
+                that.array=[];
                 var oModel = new JSONModel();
                 oModel.setData({
                         startDate: UI5Date.getInstance("2024", "0", "23"),
-                        appointments: [{
-                            title: "Meet John Miller",
-                            type: CalendarDayType.Type05,
-                            startDate: UI5Date.getInstance("2024", "0", "8", "5", "0"),
-                            endDate: UI5Date.getInstance("2024", "0", "8", "6", "0")
-                        }
+                        appointments: [
                     ],
                     supportedAppointmentItems: [
                         {
@@ -58,7 +59,7 @@
                         },
                         {
                             text: "Half Day Leave",
-                            type: CalendarDayType.Type06
+                            type: CalendarDayType.Type07
                         }
                     ]
                 });
@@ -125,13 +126,13 @@
         var isValid = true;
 
         // Validation for first name (minimum 5 characters)
-        if (obj.FirstName.length < 5) {
+        if (obj.FirstName.length < 4) {
         sap.m.MessageToast.show("First Name should have at least 5 characters");
         isValid = false;
         }
 
         // Validation for last name (minimum 5 characters)
-        if (obj.LastName.length < 5) {
+        if (obj.LastName.length < 4) {
         sap.m.MessageToast.show("Last Name should have at least 5 characters");
         isValid = false;
         }
@@ -253,6 +254,7 @@
             // });
         }
         },
+        
     onSignIn:function(){
         var oView = this.getView();
         var Email=sap.ui.getCore().byId("emailInput").getValue();
@@ -264,12 +266,36 @@
         oModel.read("/et_signupSet",{
         filters:aFilter,
             success: function (odata,res){
-                if(res.statusCode === "200"){
-                    sap.m.MessageToast.show("Welcome");
+                if(odata.results[0].MessageType=== "S"){
+                    that.Email=sap.ui.getCore().byId("emailInput").getValue();
+                    that.FullName=odata.results[0].Fullname;
+                    sap.m.MessageToast.show(odata.results[0].Message);
+                    // var FirstName=odata.results[0].FirstName;
+                    // var LastName=odata.results[0].LastName;
+                    // var FullName = FirstName + " " + LastName;
+                    oView.byId("FullName").setText(odata.results[0].Fullname);
+                    oView.byId("idUserIcon").setTooltip("Profile of " + odata.results[0].Fullname);
+                    that.getAppointments();
                     that.onclose(); 
+                    that.array=[];
+                    that.getView().byId("usersComboBox").setVisible(false);
+                    if (odata.results.length > 1) {
+                        // odata.results.shift();
+                        // Visibility logic for combobox
+                        that.getView().byId("usersComboBox").setVisible(true);
+                        var oModel = new sap.ui.model.json.JSONModel();
+                        oModel.setData({
+                            array: odata.results
+                        });
+                        // that.getView().byId("usersComboBox").setValue();
+                        that.getView().byId("usersComboBox").setModel(oModel);
+                        that.getView().byId("usersComboBox").setSelectedKey(odata.results[0].Email);
+                        
+                    }
                     oView.setBusy(false); 
                 }else{
                     sap.m.MessageToast.show(JSON.parse(res.headers["sap-message"]).message);
+                    that.Email=""
                 }
             },
             error:function(err){
@@ -278,6 +304,27 @@
     });
 
     },
+    // AddDetail:function(){
+    //     var oView=this.getView();
+    //     that.Email;
+    //     var aFilter=[];
+    //     aFilter.push(new sap.ui.model.Filter("Email",sap.ui.model.FilterOperator.EQ,that.Email));
+    //     var oModel = this.getOwnerComponent().getModel();
+    //     oModel.read("/et_signupSet",{
+    //         filters:aFilter,
+    //         success:function(odata,res){
+    //             var FirstName=odata.results[0].FirstName;
+    //             var LastName=odata.results[0].LastName;
+    //             var FullName = FirstName + " " + LastName;
+    //             oView.byId("FullName").setText=FullName;
+    //             sap.m.MessageToast.show("pass");
+    //         },
+    //         error:function(){
+    //             sap.m.MessageToast.show("Failed");
+    //         }
+    //     })
+
+    // },
             _typeFormatter: function(sType) {
                 var sTypeText = "",
                     aTypes = this.getView().getModel().getData().supportedAppointmentItems;
@@ -377,6 +424,31 @@
                 sap.ui.getCore().byId("passwordInput").setValue("");
                 sap.ui.getCore().byId("reenterpasswordInput").setValue("");
             },
+            HandleCopyText: function() {
+                var fragmentContent = sap.ui.getCore().byId("contentVBox");
+                var array=fragmentContent.mAggregations.items;
+                var copiedText = "";
+                for (var i = 0; i < array.length; i++) {
+                    if (array[i].getText()) {
+                        copiedText += array[i].getText() + "\n";
+                    }
+                }
+    
+                // Copy the text to the clipboard
+                var tempInput = document.createElement("input");
+                tempInput.value = copiedText;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+    
+                MessageToast.show("Content copied successfully!");
+            },
+    
+            CloseMessagebox: function() {
+                var dialog = this.byId("Messageboxs");
+                dialog.close();
+            },
             handleAppointmentResize: function (oEvent) {
                 var oAppointment = oEvent.getParameter("appointment"),
                     oStartDate = oEvent.getParameter("startDate"),
@@ -452,7 +524,8 @@
                 }
     
                 oModel.getData().allDay = bAllDate;
-                oModel.updateBindings();
+                oModel.updateBindings();   //Calling updateBindings() on a model triggers the refreshing of all bound UI elements that are associated with the model. 
+                that.object=oAppointment.mProperties;
     
                 if (!this._pDetailsPopover) {
                     this._pDetailsPopover = Fragment.load({
@@ -479,14 +552,159 @@
                 this.getView().getModel().setData({ startDate: oDate }, true);
             },
     
-            handleEditButton: function () {
-                // The sap.m.Popover has to be closed before the sap.m.Dialog gets opened
+            // handleEditButton: function () {
+            //     // The sap.m.Popover has to be closed before the sap.m.Dialog gets opened
+            //     var oDetailsPopover = this.byId("detailsPopover");
+            //     oDetailsPopover.close();
+            //     this.sPath = oDetailsPopover.getBindingContext().getPath();
+            //     this._arrangeDialogFragment("Edit appointment");
+            // },
+            handleMessageBoxButton:function(oEvent){
+                that.object;
+                switch(that.object.type){
+                    case "Type01":
+                        that.object.type="Sick Leave" ;
+                        break;
+                     case "Type02":
+                        that.object.type="Casual Leave" ;
+                        break;
+                     case "Type03":
+                        that.object.type="Vacation" ;
+                        break;
+                    
+                    case "Type04":
+                        that.object.type="Out of office" ;
+                        break;
+                     case "Type05":
+                        that.object.type="Work From Home" ;
+                        break;
+                     case "Type07":
+                        that.object.type="Half Day Leave" ;
+                        break;
+                }
+           
+              // Define dynamic values
+              var Typeofleave= that.object.type;
+              if(!(that.object.type==="Half Day Leave")){
+              // Assuming you have the date object as 'date'
+            var date = new Date(that.object.startDate);
+
+            // Create a date formatter
+            var oDateFormat = sap.ui.core.format.DateFormat.getDateInstance({
+                pattern: "dd/MM/yyyy" // Set the desired pattern
+            });
+
+            // Format the date object using the formatter
+           var  formattedDatefromdate = oDateFormat.format(date);
+
+              var fromdate = formattedDatefromdate;
+
+              var date = new Date(that.object.endDate);
+
+              // Create a date formatter
+            //   var oDateFormat = sap.ui.core.format.DateFormat.getDateInstance({
+            //       pattern: "dd/MM/yyyy" // Set the desired pattern
+            //   });
+              
+              // Format the date object using the formatter
+              var formattedDateendDate = oDateFormat.format(date);
+
+              var enddate=formattedDateendDate;
+            }
+            else{
+                // Assuming you have the date object as 'date'
+            var date = new Date(that.object.startDate);
+
+            // Create date formatter for date
+            var oDateFormatDate = sap.ui.core.format.DateFormat.getDateInstance({
+                pattern: "dd/MM/yyyy" // Set the desired pattern for date
+            });
+
+            // Format the date object using the date formatter
+            var formattedDate = oDateFormatDate.format(date);
+
+            // Create date formatter for time
+            var oDateFormatTime = sap.ui.core.format.DateFormat.getTimeInstance({
+                pattern: "HH:mm:ss" // Set the desired pattern for time
+            });
+
+            // Format the date object using the time formatter
+            var formattedTime = oDateFormatTime.format(date);
+
+            // Combine formatted date and time
+            var fromformattedDateTime = formattedDate + " " + formattedTime;
+
+
+            var date = new Date(that.object.endDate);
+
+            // Create date formatter for date
+            // var oDateFormatDate = sap.ui.core.format.DateFormat.getDateInstance({
+            //     pattern: "dd/MM/yyyy" // Set the desired pattern for date
+            // });
+
+            // Format the date object using the date formatter
+            var formattedDate = oDateFormatDate.format(date);
+
+            // Create date formatter for time
+            // var oDateFormatTime = sap.ui.core.format.DateFormat.getTimeInstance({
+            //     pattern: "HH:mm:ss" // Set the desired pattern for time
+            // });
+
+            // Format the date object using the time formatter
+            var formattedTime = oDateFormatTime.format(date);
+
+            // Combine formatted date and time
+            var endformattedDateTime = formattedDate + " " + formattedTime;
+
+            var fromdate=fromformattedDateTime;
+            var enddate=endformattedDateTime;
+        
+
+            
+
+            }
+
+             // Load the resource bundle
+              var oBundle = this.getView().getModel("i18n").getResourceBundle();
+              // Get the message template from the resource bundle and format it with dynamic values
+              var formattedMessage = oBundle.getText("sample", [Typeofleave, fromdate,enddate]);
                 var oDetailsPopover = this.byId("detailsPopover");
                 oDetailsPopover.close();
-                this.sPath = oDetailsPopover.getBindingContext().getPath();
-                this._arrangeDialogFragment("Edit appointment");
+
+                // Open the new fragment
+                if (!this._messagefragment) {
+                    this._messagefragment = sap.ui.xmlfragment("com.leavetracker.leavetracker.Fragments.MessageBox", this);
+                    this.getView().addDependent(this._messagefragment);
+                    
+                }
+                this._messagefragment.open();
+                this.getView().getModel().setProperty("/Fullname2", that.FullName);
+              
+                this.getView().getModel().setProperty("/content", formattedMessage);
+          
+
+
+
+                // var resourceModel=ResourceBundle.create({url:"i18n/i18n/properties"});
+                // resourceModel.getText("sample",[5,10]);
+
             },
-    
+            
+            CloseMessagebox: function() {
+                this._messagefragment.close();
+                
+            },
+
+            // CustomerHeader:function(){
+            //     if(!this._newFragment){
+            //         this._newFragment=sap.ui.xmlfragment("com.leavetracker.leavetracker.Fragments.Logout",this);
+            //         this.getView().addDependent(this._newFragment);
+            //     }
+            //     this._newFragment.open();
+
+            // },
+          
+
             handlePopoverDeleteButton: function () {
                 var oModel = this.getView().getModel(),
                     oAppointments = oModel.getData().appointments,
@@ -583,68 +801,76 @@
     
             handleDialogOkButton: function (oEvent) {
                 var createdata = {};
+                createdata.Email=that.Email;
                 createdata.Title = this.byId("appTitle").getValue();
                 createdata.ReasonForLeave = this.byId("moreInfo").getValue();
-                var inputDateString  = this.byId("DPStartDate").getValue();
+                if(this.byId("DPStartDate").getVisible()===true){
+                    createdata.FromDate = new Date(this.byId("DPStartDate").getValue())
+                   createdata.FromDate.setTime(createdata.FromDate.getTime() - (createdata.FromDate.getTimezoneOffset() * 60 * 1000));
+                   createdata.FromDate.setHours(0);
+                   createdata.FromDate.setMinutes(0);
+                   createdata.FromDate = createdata.FromDate.setSeconds(0).toString();
 
-                
-                // Parse the input date string
-                var parsedDate = new Date(inputDateString);
-
-                // Format the date into the desired pattern
-                createdata.FromDate = formatTime(parsedDate);
-
-                // Resulting formatted time
-                //console.log(formattedDate);
-
-                // Function to format the time
-                function formatTime(date) {
-                var hours = date.getHours();
-                var minutes = date.getMinutes();
-                var year = date.getFullYear();
-
-                // Pad single-digit hours and minutes with leading zero
-                hours = hours < 10 ? "0" + hours : hours;
-                minutes = minutes < 10 ? "0" + minutes : minutes;
-
-                // Return the formatted time string
-                return hours + ":" + minutes + ":" + year;
+                }else{
+                    createdata.FromDate = new Date(this.byId("DTPStartDate").getValue());
+                    createdata.FromDate=createdata.FromDate.getTime().toString();
+                    //createdata.FromDate.setTime(createdata.FromDate.getTime() - (createdata.FromDate.getTimezoneOffset() * 60 * 1000));
                 }
 
+                if(this.byId("DPEndDate").getVisible()===true){
+                    createdata.ToDate = new Date(this.byId("DPEndDate").getValue())
+                    createdata.ToDate.setTime(createdata.ToDate.getTime() - (createdata.ToDate.getTimezoneOffset() * 60 * 1000));
+                    createdata.ToDate.setHours(0);
+                   createdata.ToDate.setMinutes(0);
+                   createdata.ToDate = createdata.ToDate.setSeconds(0).toString();
 
+                }else{
+                    createdata.ToDate = new Date(this.byId("DTPEndDate").getValue());
+                    createdata.ToDate=createdata.ToDate.getTime().toString();
+                    //createdata.ToDate.setTime(createdata.ToDate.getTime() - (createdata.ToDate.getTimezoneOffset() * 60 * 1000));
 
-                // // Parse the input string
-                // var parsedDate = new Date(dateString);
-
-                // // Format the date into a string compatible with Edm.DateTime
-                // createdata.FromDate = parsedDate.toISOString();
-
-        
-                createdata.ToDate = this.byId("DPEndDate").getValue();
-
-                // // Parse the input string
-                // var parsedDate = new Date(dateStringg);
-
-                // // Format the date into a string compatible with Edm.DateTime
-                // createdata.ToDate= parsedDate.toISOString();
-
+                }
+                
 
                 createdata.AllDay = this.byId("allDay").getSelected(); // Use getSelected() for checkboxes
+// if(createdata.AllDay){
+//     createdata.AllDay="X";
+// }else{
+//     createdata.AllDay="";
+// }
+
                 createdata.LeaveType = this.byId("appType").getSelectedItem().getText(); // Assuming appType is a Select control
+                switch(createdata.LeaveType){
+                    case "Sick Leave":
+                        createdata.Color=CalendarDayType.Type01;
+                        break;
+                    case "Casual Leave":
+                        createdata.Color=CalendarDayType.Type02;
+                        break;
+                    case "Vacation":
+                        createdata.Color=CalendarDayType.Type03;
+                        break;
+                    case "Out of office":
+                        createdata.Color=CalendarDayType.Type04;
+                        break;
+                    case "Work From Home":
+                        createdata.Color=CalendarDayType.Type05;
+                        break;
+                    case "Half Day Leave":
+                        createdata.Color=CalendarDayType.Type07;
+                        break;
+                }
                 var Model = this.getOwnerComponent().getModel();
                 Model.create("/et_calendarSet",createdata,{
                         success: function (odata){
-                            sap.m.MessageToast.show("Success");
-                        
-                        
-                                        
+                            sap.m.MessageToast.show("Request sent successfully");
+                            this.getAppointments();          
                         }.bind(this), 
                         error: function (err) {
                         sap.m.MessageToast.show("Failed");
                         }
                     });
-
-
+                  
                 
                 var bAllDayAppointment = (this.byId("allDay")).getSelected(),
                     sStartDate = bAllDayAppointment ? "DPStartDate" : "DTPStartDate",
@@ -660,29 +886,63 @@
                 if (this.byId(sStartDate).getValueState() !== ValueState.Error
                     && this.byId(sEndDate).getValueState() !== ValueState.Error) {
     
-                    if (this.sPath) {
-                        sAppointmentPath = this.sPath;
-                        oModel.setProperty(sAppointmentPath + "/title", sTitle);
-                        oModel.setProperty(sAppointmentPath + "/text", sText);
-                        oModel.setProperty(sAppointmentPath + "/type", sType);
-                        oModel.setProperty(sAppointmentPath + "/startDate", oStartDate);
-                        oModel.setProperty(sAppointmentPath + "/endDate", oEndDate);
-                    } else {
-                        oModel.getData().appointments.push({
-                            title: sTitle,
-                            text: sText,
-                            type: sType,
-                            startDate: oStartDate,
-                            endDate: oEndDate
-                        });
-                    }
+                    // if (this.sPath) {
+                    //     sAppointmentPath = this.sPath;
+                    //     oModel.setProperty(sAppointmentPath + "/title", sTitle);
+                    //     oModel.setProperty(sAppointmentPath + "/text", sText);
+                    //     oModel.setProperty(sAppointmentPath + "/type", sType);
+                    //     oModel.setProperty(sAppointmentPath + "/startDate", oStartDate);
+                    //     oModel.setProperty(sAppointmentPath + "/endDate", oEndDate);
+                    // } else {
+                    //     oModel.getData().appointments.push({
+                    //         title: sTitle,
+                    //         text: sText,
+                    //         type: sType,
+                    //         startDate: oStartDate,
+                    //         endDate: oEndDate
+                    //     });
+                    // }
     
-                    oModel.updateBindings();
+                    // oModel.updateBindings();
     
                     this.byId("modifyDialog").close();
                 }
             },
+            getAppointments:function(parm){
+                var view=this.getView();
+                view.setBusy(true);
+                if (parm === "comboBox") {
+                    that.Email = that.getView().byId("usersComboBox").getSelectedKey();
+                }
+                var aFilter=[];
+                aFilter.push(new sap.ui.model.Filter("Email",sap.ui.model.FilterOperator.EQ,that.Email));
+                var oModel=this.getOwnerComponent().getModel();
+                oModel.read("/et_calendarSet",{
+                    filters:aFilter,
+                    success:function(odata,res){
+                        var oModelData=that.getView().getModel();
+                        oModelData.getData().appointments = [];
+                        for (var i=0; i < odata.results.length;i++) {
+                            oModelData.getData().appointments.push({
+                                title: odata.results[i].Title,
+                                text: odata.results[i].ReasonForLeave,
+                                allDay:odata.results[i].AllDay,
+                                type: odata.results[i].Color,
+                                startDate: new Date(parseInt(odata.results[i].FromDate)),
+                                endDate: new Date(parseInt(odata.results[i].ToDate))
+                            });
+                    }
+                    oModelData.refresh(true);
+                        // sap.m.MessageToast.show("Ok");
+                        view.setBusy(false);
     
+                    },
+                    error:function(err){
+                        sap.m.MessageToast.show("Not Ok");
+                        view.setBusy(false);
+                    }
+                })
+            },
             formatDate: function (oDate) {
                 if (oDate) {
                     var iHours = oDate.getHours(),
@@ -770,6 +1030,7 @@
     
                 oButton.setEnabled(bEnabled);
             },
+            
     
             handleDateTimePickerChange: function(oEvent) {
                 var oDateTimePickerStart = this.byId("DTPStartDate"),
@@ -855,6 +1116,55 @@
                         oLegendPopover.openBy(oSource);
                     }
                 });
+            },
+            CustomerHeader:function(oEvent){
+                var oSource=oEvent.getSource(),
+                oview=this.getView();
+
+                if(!this._Logoutpopover){
+                    this._Logoutpopover=Fragment.load({
+                        id:oview.getId(),
+                        name:"com.leavetracker.leavetracker.Fragments.Logout",
+                        controller:this
+                        
+                    }).then(function(oLogoutpopover){
+                        oview.addDependent(oLogoutpopover);
+                        oview.byId("title").setText(that.FullName);
+                        oview.byId("email").setText(that.Email);
+                        return oLogoutpopover
+                        
+                    });
+                }
+                this._Logoutpopover.then(function(oLogoutpopover){
+                    oview.byId("title").setText(that.FullName);
+                        oview.byId("email").setText(that.Email);
+                    if(oLogoutpopover.isOpen()){
+                        oLogoutpopover.close();
+                    }else{
+                        oLogoutpopover.openBy(oSource)
+                    }
+                })
+            },
+            HandleSignout:function(){
+            var oView = this.getView();
+        oView.setBusy(true);
+        this.getView().byId("usersComboBox").setVisible(false);
+        Fragment.load({
+            name: "com.leavetracker.leavetracker.Fragments.Signup",
+            controller: this
+        }).then(function (oFragment) {
+            this._oDialog = new Dialog({
+                title: "Signup",
+                id:"DialogId",
+                icon: "sap-icon://account",
+                content: oFragment,
+                afterClose: function () {
+                    this._oDialog.destroy();
+                }.bind(this)
+            });
+        
+            this._oDialog.open();
+        }.bind(this));
             }
         });
     });

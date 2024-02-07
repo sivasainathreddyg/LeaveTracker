@@ -4,15 +4,27 @@
 	xmlns:core="sap.ui.core"
 	xmlns:unified="sap.ui.unified"
 	xmlns="sap.m" busyIndicatorDelay="0" >
-	<VBox class="sapUiSmallMargin">
-			<OverflowToolbar height="100%" width="100%" visible="true">
-				
-				<ToolbarSpacer/>
-				<Label text="{}"></Label>
-				<Button id="UserAccount" icon="sap-icon://customer" type="Accept" press="handleOpenFragment" tooltip="User Details"></Button>
-
-				
-			</OverflowToolbar>
+	<Page>
+	<customHeader>
+	<Bar>
+	<contentRight>
+	<Title text="" id="FullName" level="H1" ></Title>
+	<core:Icon
+				src="sap-icon://customer"
+				size="150%"
+				press="CustomerHeader"
+				decorative="false"
+				tooltip="Heloo"
+				id="idUserIcon"
+				color="#0000ff">
+				<core:layoutData>
+					<FlexItemData growFactor="1" />
+				</core:layoutData>
+			</core:Icon>
+	</contentRight>
+	</Bar>
+	</customHeader>
+	
 		<SinglePlanningCalendar
 			id="SPC1"
 			class="sapUiSmallMarginTop"
@@ -31,9 +43,13 @@
 			enableAppointmentsCreate="{settings>/enableAppointmentsCreate}"
 			stickyMode="{settings>/stickyMode}"
 			appointments="{path: '/appointments'}">
+			
 			<actions>
 				<Button id="addNewAppointment" text="Create" press="handleAppointmentCreate" tooltip="Create Leave Request" />
 				<Button id="legendButton" icon="sap-icon://legend" press="handleOpenLegend" tooltip="Open SinglePlanningCalendar legend" ariaHasPopup="Dialog" />
+				<ComboBox id="usersComboBox" visible="false" items="{/array}" selectionChange="getAppointments('comboBox')">
+				     <core:Item text="{Fullname}" key="{Email}"/>
+				</ComboBox>
 			</actions>
 			<views>
 				<SinglePlanningCalendarDayView key="DayView" title="Day" />
@@ -52,5 +68,5 @@
 				</unified:CalendarAppointment>
 			</appointments>
 		</SinglePlanningCalendar>
-	</VBox>
+	</Page>
 </mvc:View>
