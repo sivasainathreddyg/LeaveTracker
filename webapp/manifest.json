@@ -17,12 +17,25 @@
     },
     "dataSources": {
       "mainService": {
-        "uri": "/sap/opu/odata/sap/ZTEST_APP_SRV/",
+        "uri": "/sap/opu/odata/sap/ZLEAVE_TRACKER_APP_SRV/",
         "type": "OData",
         "settings": {
           "annotations": [],
           "localUri": "localService/metadata.xml",
           "odataVersion": "2.0"
+        }
+      }
+    },
+    "crossNavigation": {
+      "inbounds": {
+        "leave tracker-show": {
+          "semanticObject": "leave tracker",
+          "action": "show",
+          "title": "{{flpTitle}}",
+          "signature": {
+            "parameters": {},
+            "additionalParameters": "allowed"
+          }
         }
       }
     }
@@ -117,5 +130,9 @@
       "async": true,
       "id": "App"
     }
+  },
+  "sap.cloud": {
+    "public": true,
+    "service": "comleavetrackerleavetracker"
   }
 }
